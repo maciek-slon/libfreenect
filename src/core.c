@@ -49,7 +49,10 @@ FREENECTAPI int freenect_init(freenect_context **ctx, freenect_usb_context *usb_
 	memset(*ctx, 0, sizeof(freenect_context));
 
 	(*ctx)->log_level = LL_WARNING;
-	(*ctx)->enabled_subdevices = (freenect_device_flags)(FREENECT_DEVICE_MOTOR | FREENECT_DEVICE_CAMERA
+	(*ctx)->enabled_subdevices = (freenect_device_flags)(FREENECT_DEVICE_CAMERA
+#ifdef BUILD_MOTOR	
+			| FREENECT_DEVICE_MOTOR
+#endif
 #ifdef BUILD_AUDIO
 			| FREENECT_DEVICE_AUDIO
 #endif
@@ -133,15 +136,21 @@ FREENECTAPI void freenect_free_device_attributes(struct freenect_device_attribut
 }
 
 FREENECTAPI int freenect_supported_subdevices(void) {
+int ret = FREENECT_DEVICE_CAMERA;
 #ifdef BUILD_AUDIO
-	return FREENECT_DEVICE_MOTOR | FREENECT_DEVICE_CAMERA | FREENECT_DEVICE_AUDIO;
-#else
-	return FREENECT_DEVICE_MOTOR | FREENECT_DEVICE_CAMERA;
+	ret = ret | FREENECT_DEVICE_AUDIO;
 #endif
+#ifdef BUILD_MOTOR
+	ret = ret | FREENECT_DEVICE_MOTOR;
+#endif
+	return ret;
 }
 
 FREENECTAPI void freenect_select_subdevices(freenect_context *ctx, freenect_device_flags subdevs) {
-	ctx->enabled_subdevices = (freenect_device_flags)(subdevs & (FREENECT_DEVICE_MOTOR | FREENECT_DEVICE_CAMERA
+	ctx->enabled_subdevices = (freenect_device_flags)(subdevs & (FREENECT_DEVICE_CAMERA 
+#ifdef BUILD_MOTOR
+			| FREENECT_DEVICE_MOTOR
+#endif		
 #ifdef BUILD_AUDIO
 			| FREENECT_DEVICE_AUDIO
 #endif

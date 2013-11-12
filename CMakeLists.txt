@@ -49,6 +49,7 @@ set (PROJECT_APIVER
   "${PROJECT_VER_MAJOR}.${PROJECT_VER_MINOR}")
 
 OPTION(BUILD_AUDIO "Build audio support" OFF)
+OPTION(BUILD_MOTOR "Build motor support" OFF)
 OPTION(BUILD_REDIST_PACKAGE "Build libfreenect in a legally-redistributable manner (only affects audio)" OFF)
 OPTION(BUILD_EXAMPLES "Build example programs" ON)
 OPTION(BUILD_FAKENECT "Build fakenect mock library" ON)
@@ -84,6 +85,9 @@ endif()
 
 if(BUILD_AUDIO)
   add_definitions(-DBUILD_AUDIO)
+endif()
+if(BUILD_MOTOR)
+  add_definitions(-DBUILD_MOTOR)
 endif()
 
 if (WIN32)

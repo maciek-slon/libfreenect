@@ -25,6 +25,7 @@
  */
 
 #include <stdio.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -162,8 +163,10 @@ FN_INTERNAL int fnusb_open_subdevices(freenect_device *dev, int index)
 
 	dev->usb_cam.parent = dev;
 	dev->usb_cam.dev = NULL;
+#ifdef BUILD_MOTOR
 	dev->usb_motor.parent = dev;
 	dev->usb_motor.dev = NULL;
+#endif
 #ifdef BUILD_AUDIO
 	dev->usb_audio.parent = dev;
 	dev->usb_audio.dev = NULL;
@@ -255,6 +258,9 @@ FN_INTERNAL int fnusb_open_subdevices(freenect_device *dev, int index)
 
 		if (desc.idVendor != VID_MICROSOFT)
 			continue;
+
+#ifdef BUILD_MOTOR
+		// Search for the motor
 		if ((ctx->enabled_subdevices & FREENECT_DEVICE_MOTOR) && !dev->usb_motor.dev && desc.idProduct == PID_NUI_MOTOR) {
 			// If the index given by the user matches our camera index
 			if (nr_mot == index) {
@@ -275,6 +281,7 @@ FN_INTERNAL int fnusb_open_subdevices(freenect_device *dev, int index)
 				nr_mot++;
 			}
 		}
+#endif
 
 #ifdef BUILD_AUDIO
 		// TODO: check that the firmware has already been loaded; if not, upload firmware.
@@ -396,7 +403,9 @@ FN_INTERNAL int fnusb_open_subdevices(freenect_device *dev, int index)
 
 	// Check that each subdevice is either opened or not enabled.
 	if ( (dev->usb_cam.dev || !(ctx->enabled_subdevices & FREENECT_DEVICE_CAMERA))
+#ifdef BUILD_MOTOR
 		&& (dev->usb_motor.dev || !(ctx->enabled_subdevices & FREENECT_DEVICE_MOTOR))
+#endif
 #ifdef BUILD_AUDIO
 		&& (dev->usb_audio.dev || !(ctx->enabled_subdevices & FREENECT_DEVICE_AUDIO))
 #endif
@@ -407,10 +416,12 @@ FN_INTERNAL int fnusb_open_subdevices(freenect_device *dev, int index)
 			libusb_release_interface(dev->usb_cam.dev, 0);
 			libusb_close(dev->usb_cam.dev);
 		}
+#ifdef BUILD_MOTOR
 		if (dev->usb_motor.dev) {
 			libusb_release_interface(dev->usb_motor.dev, 0);
 			libusb_close(dev->usb_motor.dev);
 		}
+#endif
 #ifdef BUILD_AUDIO
 		if (dev->usb_audio.dev) {
 			libusb_release_interface(dev->usb_audio.dev, 0);
@@ -431,11 +442,13 @@ FN_INTERNAL int fnusb_close_subdevices(freenect_device *dev)
 		libusb_close(dev->usb_cam.dev);
 		dev->usb_cam.dev = NULL;
 	}
+#ifdef BUILD_MOTOR
 	if (dev->usb_motor.dev) {
 		libusb_release_interface(dev->usb_motor.dev, 0);
 		libusb_close(dev->usb_motor.dev);
 		dev->usb_motor.dev = NULL;
 	}
+#endif
 #ifdef BUILD_AUDIO
 	if (dev->usb_audio.dev) {
 		libusb_release_interface(dev->usb_audio.dev, 0);

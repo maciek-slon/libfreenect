@@ -213,7 +213,11 @@ static void init_thread(void)
 	// We claim both the motor and the camera, because we can't know in advance
 	// which devices the caller will want, and the c_sync interface doesn't
 	// support audio, so there's no reason to claim the device needlessly.
-	freenect_select_subdevices(ctx, (freenect_device_flags)(FREENECT_DEVICE_MOTOR | FREENECT_DEVICE_CAMERA));
+	freenect_select_subdevices(ctx, (freenect_device_flags)(FREENECT_DEVICE_CAMERA
+#ifdef BUILD_MOTOR
+		| FREENECT_DEVICE_MOTOR
+#endif
+	));
 	pthread_create(&thread, NULL, init, NULL);
 }
 
@@ -245,6 +249,7 @@ static sync_kinect_t *alloc_kinect(int index)
 {
 	sync_kinect_t *kinect = (sync_kinect_t*)malloc(sizeof(sync_kinect_t));
 	if (freenect_open_device(ctx, &kinect->dev, index)) {
+		printf("Error: alloc_kinect [%d]\n", index);
 		free(kinect);
 		return NULL;
 	}
@@ -275,7 +280,7 @@ static int setup_kinect(int index, int fmt, int is_depth)
 		kinects[index] = alloc_kinect(index);
 	}
 	if (!kinects[index]) {
-		printf("Error: Invalid index [%d]\n", index);
+		printf("Error: %s %d Invalid index [%d]\n", __FILE__, __LINE__, index);
 		// If we started the thread, we need to bring it back
 		if (!thread_running_prev) {
 			thread_running = 0;
@@ -335,7 +340,7 @@ static int sync_get(void **data, uint32_t *timestamp, buffer_ring_t *buf)
 static int runloop_enter(int index)
 {
 	if (index < 0 || index >= MAX_KINECTS) {
-		printf("Error: Invalid index [%d]\n", index);
+		printf("Error: %s %d Invalid index [%d]\n", __FILE__, __LINE__, index);
 		return -1;
 	}
 	if (!thread_running || !kinects[index])
@@ -356,7 +361,7 @@ static void runloop_exit()
 int freenect_sync_get_video(void **video, uint32_t *timestamp, int index, freenect_video_format fmt)
 {
 	if (index < 0 || index >= MAX_KINECTS) {
-		printf("Error: Invalid index [%d]\n", index);
+		printf("Error: %s %d Invalid index [%d]\n", __FILE__, __LINE__, index);
 		return -1;
 	}
 	if (!thread_running || !kinects[index] || kinects[index]->video.fmt != fmt)
@@ -369,7 +374,7 @@ int freenect_sync_get_video(void **video, uint32_t *timestamp, int index, freene
 int freenect_sync_get_depth(void **depth, uint32_t *timestamp, int index, freenect_depth_format fmt)
 {
 	if (index < 0 || index >= MAX_KINECTS) {
-		printf("Error: Invalid index [%d]\n", index);
+		printf("Error: %s %d Invalid index [%d]\n", __FILE__, __LINE__, index);
 		return -1;
 	}
 	if (!thread_running || !kinects[index] || kinects[index]->depth.fmt != fmt)
